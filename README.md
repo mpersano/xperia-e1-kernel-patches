@@ -15,7 +15,7 @@ This is the easy part.
 
         cd kernel
         mkdir ../out
-        PATH=/path/to/toolchain/arm-eabi-4.7/bin ARCH=arm CROSS_COMPILE=arm-eabi- make O=../out msm8610_build_defconfig zImage -j2
+        ARCH=arm CROSS_COMPILE=/path/to/toolchain/arm-eabi-4.7/bin/arm-eabi- make O=../out msm8610_build_defconfig zImage -j2
 
     ... and after a while you should have a brand new zImage under `../out/arch/arm/boot/zImage`
 
@@ -43,4 +43,4 @@ Anyway, once you have the qcdt and ramdisk files, you can build a boot.img with 
 
     ./mkqcdtbootimg --kernel zImage --ramdisk ramdisk.gz --qcdt qcdt --base 0x00000000 --ramdisk_offset 0x2008000 --kernel_offset 0x10000 --tags_offset 0x1e08000 --pagesize 2048 --cmdline "androidboot.hardware=qcom user_debug=31 maxcpus=2 msm_rtb.filter=0x3F ehci-hcd.park=3 msm_rtb.enable=0 lpj=192598 dwc3.maximum_speed=high dwc3_msm.prop_chg_detect=Y" -o boot.img
 
-... which you can flash on your phone with fastboot. Victory is yours.
+... which you can flash on your phone with fastboot.
