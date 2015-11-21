@@ -1,8 +1,7 @@
-customizing the Xperia E1 kernel
---------------------------------
+## customizing the Xperia E1 kernel
 
-building the kernel
--------------------
+### building the kernel
+
 This is the easy part.
 
 *   Download the source tarball from Sony's site. I used [this one](http://developer.sonymobile.com/downloads/xperia-open-source-archives/open-source-archive-for-20-1-a-2-13-20-1-b-2-15-and-20-1-b-2-16/).
@@ -15,12 +14,12 @@ This is the easy part.
 
         cd kernel
         mkdir ../out
-        ARCH=arm CROSS_COMPILE=/path/to/toolchain/arm-eabi-4.7/bin/arm-eabi- make O=../out msm8610_build_defconfig zImage -j2
+        make ARCH=arm CROSS_COMPILE=/path/to//arm-eabi-4.7/bin/arm-eabi- O=../out msm8610_build_defconfig zImage -j2
 
     ... and after a while you should have a brand new zImage under `../out/arch/arm/boot/zImage`
 
-getting the damn thing into the phone
--------------------------------------
+### getting the damn thing into the phone
+
 Now this is where things get messy. You need to build an image of the boot partition.
 
 Traditionally, on Android this was just a header followed by the zImage and the ramdisk. You'd use a python script called `mkbootimg` to build it (clone [this](https://android.googlesource.com/platform/system/core) if curious). However on ARM you're now required to use a [dtb blob](http://elinux.org/Device_Tree) (aka Flattened Device Tree). In the case of Xperia phones (or the Xperia E1 at least), following the ramdisk there's a structure with a signature that starts with `QCDT` (presumably QC stands for Qualcomm) that contains a bunch of dtb images. See [this](https://raw.githubusercontent.com/sonyxperiadev/mkqcdtbootimg/master/dtbtool.txt) for details.
@@ -44,3 +43,37 @@ Anyway, once you have the qcdt and ramdisk files, you can build a boot.img with 
     ./mkqcdtbootimg --kernel zImage --ramdisk ramdisk.gz --qcdt qcdt --base 0x00000000 --ramdisk_offset 0x2008000 --kernel_offset 0x10000 --tags_offset 0x1e08000 --pagesize 2048 --cmdline "androidboot.hardware=qcom user_debug=31 maxcpus=2 msm_rtb.filter=0x3F ehci-hcd.park=3 msm_rtb.enable=0 lpj=192598 dwc3.maximum_speed=high dwc3_msm.prop_chg_detect=Y" -o boot.img
 
 ... which you can flash on your phone with fastboot.
+
+### rooting the phone
+
+TODO
+
+### getting wi-fi to work
+
+Ok, this took me a while to figure out...
+
+You don't get wifi because the module wlan.ko is not compatible with the kernel you just compiled. You need to build a new one.
+
+*   Get the source:
+
+        git clone --depth=1 https://github.com/sonyxperiadev/prima
+
+*   The module needs a dummy parameter `qcom_reg` (trust me). Edit `CORE/HDD/src/wlan_hdd_main.c` and add the following to the bottom:
+
+        static int qcom_reg = 0;
+        module_param(qcom_reg, int, 0644);
+
+*   Build the module:
+
+        cd prima
+        make ARCH=arm CROSS_COMPILE=/path/to/arm-eabi-4.7/bin/arm-eabi- -C /path/to/kernel/out M=$PWD CONFIG_PRONTO_WLAN=m CONFIG_PRIMA_WLAN_LFR=y KERNEL_BUILD=1 WLAN_ROOT=$PWD -j2
+
+*   Copy the `wlan.ko` file that was just generated to `/system/lib/modules/pronto/pronto_wlan.ko`
+
+*   Copy the following files from `prima/firmware_bin` to the phone `/system/etc/firmware/wlan/prima` on the phone:
+
+        WCNSS_cfg.dat
+        WCNSS_qcom_cfg.ini
+        WCNSS_qcom_wlan_nv.bin
+
+If you don't add the `qcom_reg` parameter, you'll notice that even though you can load the module successfully with `insmod`, the module won't be loaded during startup. This happens because whoever is trying to install the module (`libhardware_legacy.so`) is passing the parameter `qcom_reg=0`, which apparently doesn't exist in the open-source version of the module.
