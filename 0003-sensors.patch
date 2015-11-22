@@ -1,0 +1,19 @@
+The sensors sysfs class is registered twice, once by drivers/input/sensor_mgr.c, and
+then by (mainline kernel) drivers/sensors/sensors_class.c. The second registration
+attempt fails with the following error:
+
+    <4>[    0.862752] sysfs: cannot create duplicate filename '/class/sensors'
+
+This patch disables the standard sensors class.
+
+--- a/arch/arm/configs/msm8610_build_defconfig	2014-09-25 23:49:32.000000000 -0300
++++ b/arch/arm/configs/msm8610_build_defconfig	2015-11-22 16:40:19.784000000 -0200
+@@ -391,7 +391,7 @@
+ CONFIG_QPNP_VIBRATOR=y
+ CONFIG_QPNP_REVID=y
+ CONFIG_MSM_IOMMU_V0=y
+-CONFIG_SENSORS=y
++CONFIG_SENSORS=n
+ CONFIG_EXT2_FS=y
+ CONFIG_EXT2_FS_XATTR=y
+ CONFIG_EXT3_FS=y
