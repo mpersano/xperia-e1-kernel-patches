@@ -1,3 +1,10 @@
+msm-thermal driver fails to load with the following error message:
+
+    <4>[    0.760658] msm_thermal: Wrong number of cpu
+
+This happens because msm8210 only has two CPUs, but the device tree has
+four CPU sensors in the qcom,msm-thermal node.
+
 --- a/arch/arm/boot/dts/msm8610.dtsi	2014-09-25 23:49:52.000000000 -0300
 +++ b/arch/arm/boot/dts/msm8610.dtsi	2015-11-22 09:35:53.276000000 -0200
 @@ -916,8 +916,7 @@
