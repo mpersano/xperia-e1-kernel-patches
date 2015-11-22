@@ -38,7 +38,7 @@ This is the easy part.
             --cmdline "androidboot.hardware=qcom user_debug=31 maxcpus=2 msm_rtb.filter=0x3F ehci-hcd.park=3 msm_rtb.enable=0 lpj=192598 dwc3.maximum_speed=high dwc3_msm.prop_chg_detect=Y" \
             -o boot.img
 
-    Flash from fastboot with `fastboot flash boot boot.img`.
+Flash it on the phone with fastboot.
 
 ### getting ramdisk.gz
 
