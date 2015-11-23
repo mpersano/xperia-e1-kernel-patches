@@ -1,0 +1,31 @@
+Trying to read less than 76 bytes from /sys/class/sensors/${NAME}/deviceInfor
+causes a kernel crash. The original driver author should have used
+memory_read_from_buffer.
+
+Would have been much more serious if the deviceInfor property were
+world-readable.
+
+--- a/drivers/input/sensor_mgr.c	2014-09-25 23:49:05.000000000 -0300
++++ b/drivers/input/sensor_mgr.c	2015-11-22 23:43:01.548000000 -0200
+@@ -123,16 +123,15 @@
+ {
+ 	struct device* dev = container_of(kobj, struct device, kobj);
+ 	sensor_device* sDev = dev_get_drvdata(dev);
+-	ssize_t siz = sizeof(struct device_infor);
++	ssize_t siz;
+ 	if(!sDev){
+ 		return -EPERM;
+ 	}
+ 	mutex_lock(&sDev->mutex);
+-	if(sDev->infor && siz == size){
+-		memcpy(buf, sDev->infor, siz);
+-	}else{
+-		memset(buf, 0, siz);
+-	}
++	if (sDev->infor)
++		siz = memory_read_from_buffer(buf, size, &pos, sDev->infor, sizeof(*sDev->infor));
++	else
++		siz = 0;
+ 	mutex_unlock(&sDev->mutex);
+ 	return siz;
+ }
